@@ -1,0 +1,27 @@
+from PIL import Image
+import numpy as np
+import math
+import pandas as pd
+
+def processing(img):
+    min1=img.min();
+    max1=img.max();
+    img = (img-min1) * 225/(max1-min1)
+    hm_len = img.shape[0]
+    bw2d = np.outer(np.hamming(hm_len), np.ones(hm_len))
+    bw2d = np.sqrt(bw2d * bw2d.T)
+    f=np.fft.fft2(np.multiply(img, bw2d))
+    j=np.log10(np.square(abs(np.fft.fftshift(f))))
+    mu=np.mean(j)
+    sigmainv=1/np.std(j)
+    avg=np.ones((256,256))
+    avg=np.multiply(mu,avg)
+    output=np.multiply(sigmainv,(j-avg))
+    return output
+
+img=np.array(Image.open('a.png').convert('L').resize((256,256)))
+output=processing(img)
+out=np.ones((16129))
+for i in range(64,191):
+    for j in range(64,191):   
+        out[(i-64)*127+j-64]=output[i][j]
